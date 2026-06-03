@@ -214,7 +214,8 @@ if plik:
                         lines.append(
                             f'{int(zawodnik["Miejsce"])}. '
                             f'{zawodnik["Name"]} '
-                            f'({zawodnik["id"]})'
+                            f'({zawodnik["id"]}) '
+                            f'- {zawodnik["Wynik"]}'
                         )
 
                     tekst = "<br/>".join(lines)
