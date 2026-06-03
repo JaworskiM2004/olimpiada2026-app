@@ -3,6 +3,8 @@ import pandas as pd
 from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 st.set_page_config(page_title="Generator wyników zawodów")
 
@@ -47,7 +49,18 @@ if plik:
 
         pdf = SimpleDocTemplate(pdf_buffer)
 
+        pdfmetrics.registerFont(
+            TTFont(
+                "NotoSans",
+                "NotoSans-Regular.ttf"
+            )
+        )
+
         styles = getSampleStyleSheet()
+
+        styles["BodyText"].fontName = "NotoSans"
+        styles["Heading2"].fontName = "NotoSans"
+        styles["Heading3"].fontName = "NotoSans"
 
         pdf_elements = []
 
