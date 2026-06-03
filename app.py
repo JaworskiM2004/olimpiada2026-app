@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -205,20 +205,6 @@ if plik:
 
                 for kategoria, grupa_pdf in wyniki.groupby("Kategoria"):
 
-                    pdf_elements.append(
-                        Paragraph(
-                            f"{arkusz}",
-                            styles["Heading2"]
-                        )
-                    )
-
-                    pdf_elements.append(
-                        Paragraph(
-                            kategoria,
-                            styles["Heading3"]
-                        )
-                    )
-
                     grupa_pdf = grupa_pdf.sort_values("Miejsce")
 
                     lines = []
@@ -233,15 +219,24 @@ if plik:
 
                     tekst = "<br/>".join(lines)
 
-                    pdf_elements.append(
+                    blok = [
+                        Paragraph(
+                            arkusz,
+                            styles["Heading3"]
+                        ),
+                        Paragraph(
+                            kategoria,
+                            styles["BodyText"]
+                        ),
                         Paragraph(
                             tekst,
                             styles["BodyText"]
-                        )
-                    )
+                        ),
+                        Spacer(1, 8)
+                    ]
 
                     pdf_elements.append(
-                        Spacer(1, 12)
+                        KeepTogether(blok)
                     )
 
         pdf.build(pdf_elements)
