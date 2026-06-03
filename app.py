@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
 st.set_page_config(page_title="Generator wyników zawodów")
 
@@ -40,6 +42,14 @@ if plik:
         xls = pd.ExcelFile(plik)
 
         output = BytesIO()
+
+        pdf_buffer = BytesIO()
+
+        pdf = SimpleDocTemplate(pdf_buffer)
+
+        styles = getSampleStyleSheet()
+
+        pdf_elements = []
 
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
 
@@ -180,6 +190,51 @@ if plik:
                     index=False
                 )
 
+                for kategoria, grupa_pdf in wyniki.groupby("Kategoria"):
+
+                    pdf_elements.append(
+                        Paragraph(
+                            f"{arkusz}",
+                            styles["Heading2"]
+                        )
+                    )
+
+                    pdf_elements.append(
+                        Paragraph(
+                            kategoria,
+                            styles["Heading3"]
+                        )
+                    )
+
+                    grupa_pdf = grupa_pdf.sort_values("Miejsce")
+
+                    lines = []
+
+                    for _, zawodnik in grupa_pdf.iterrows():
+
+                        lines.append(
+                            f'{int(zawodnik["Miejsce"])}. '
+                            f'{zawodnik["Name"]} '
+                            f'({zawodnik["id"]})'
+                        )
+
+                    tekst = "<br/>".join(lines)
+
+                    pdf_elements.append(
+                        Paragraph(
+                            tekst,
+                            styles["BodyText"]
+                        )
+                    )
+
+                    pdf_elements.append(
+                        Spacer(1, 12)
+                    )
+
+        pdf.build(pdf_elements)
+
+        pdf_buffer.seek(0)
+
         output.seek(0)
 
         st.success("Wyniki wygenerowane")
@@ -189,4 +244,11 @@ if plik:
             data=output,
             file_name="wyniki.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        st.download_button(
+            label="📄 Pobierz wolontariusze.pdf",
+            data=pdf_buffer,
+            file_name="wolontariusze.pdf",
+            mime="application/pdf"
         )
