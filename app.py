@@ -27,6 +27,10 @@ CZASOWE = [
     "Wyścig"
 ]
 
+PUNKTOWE = [
+    "Boule"
+]
+
 def czy_czasowa(nazwa):
     return any(sl in nazwa for sl in CZASOWE)
 
@@ -141,7 +145,10 @@ if plik:
                             .astype(int)
                         )
 
-                        jednostka = "m"
+                        if arkusz in PUNKTOWE:
+                            jednostka = "pkt"
+                        else:
+                            jednostka = "m"
 
                     grupa = grupa[
                         grupa["Miejsce"] <= 3
