@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
+import smtplib
 from io import BytesIO
+from email.message import EmailMessage
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
@@ -9,6 +11,10 @@ from reportlab.pdfbase.ttfonts import TTFont
 st.set_page_config(page_title="Generator wyników zawodów")
 
 st.title("🏆 Generator wyników zawodów")
+
+EMAIL_SENDER = st.secrets["EMAIL_SENDER"]
+EMAIL_PASSWORD = st.secrets["EMAIL_PASSWORD"]
+EMAIL_RECIPIENT = "seweryn.smorga@mosir.torun.pl"
 
 POMIN = {
     "Tenis stołowy",
@@ -42,6 +48,10 @@ plik = st.file_uploader(
 if plik:
 
     st.success("Plik został wgrany")
+
+    wyslij_mail = st.checkbox(
+        "📧 Wyślij automatycznie do MOSiR"
+    )
 
     if st.button("Generuj wyniki"):
 
@@ -250,7 +260,61 @@ if plik:
         pdf.build(pdf_elements)
 
         pdf_buffer.seek(0)
+        output.seek(0)
 
+        if wyslij_mail:
+
+            msg = EmailMessage()
+
+            msg["Subject"] = "Olimpiada 2026 - wyniki i lista dla wolontariuszy"
+            msg["From"] = (
+                f"Generator Olimpiady "
+            )
+            msg["To"] = EMAIL_RECIPIENT
+
+            msg.set_content(
+                "W załączniku wyniki.xlsx oraz wolontariusze.pdf"
+            )
+
+            msg.add_attachment(
+                output.getvalue(),
+                maintype="application",
+                subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                filename="wyniki.xlsx"
+            )
+
+            msg.add_attachment(
+                pdf_buffer.getvalue(),
+                maintype="application",
+                subtype="pdf",
+                filename="wolontariusze.pdf"
+            )
+
+            try:
+
+                with smtplib.SMTP_SSL(
+                    "smtp.gmail.com",
+                    465
+                ) as smtp:
+
+                    smtp.login(
+                        EMAIL_SENDER,
+                        EMAIL_PASSWORD
+                    )
+
+                    smtp.send_message(msg)
+
+                st.success(
+                    "📧 E-mail został wysłany"
+                )
+
+            except Exception as e:
+
+                st.error(
+                    f"Błąd wysyłki e-mail: {e}"
+                )
+
+        pdf_buffer.seek(0)
         output.seek(0)
 
         st.success("Wyniki wygenerowane")
